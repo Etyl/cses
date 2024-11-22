@@ -11,37 +11,37 @@ using namespace std;
 #define se second
 #define F(i,k,n) for(int i=k;i<n;i++)
  
-
+const int INF = 100'000'000;
 int n,m;
-vector<vector<char>> matrix;
-vector<vector<char>> dirs;
+vector<vector<int>> nxt;
+vector<int> parent;
+vector<int> dist;
 pii start,finish;
 
-void bfs(int x, int y) {
-    deque<pii> wait;
-    wait.push_back({x,y});
-    while(sz(wait)>0) {
-        pii p=wait.front();
-        wait.pop_front();
-        int i=p.fi,j=p.se;
-        
-        if (i>0 && matrix[i-1][j]=='.' && dirs[i-1][j]==' ') {
-            dirs[i-1][j]='D';
-            wait.push_back({i-1,j});
+bool djisktra(int begin, int end) {
+
+    vector<bool> exp(n,false);
+    priority_queue<pii, vector<pii>, greater<pii>> wait;
+    dist[begin]=0;
+    wait.emplace(0,begin);
+    while (!wait.empty()) {
+        int node, node_dist;
+        tie(node_dist, node) = wait.top();
+        wait.pop();
+
+        if (exp[node]) continue;
+        exp[node]=true;
+
+        if (node==end) return true;
+        for (int x:nxt[node]) {
+            if (!exp[x] && dist[node]+1 < dist[x]) {
+                parent[x]=node;
+                dist[x]=dist[node]+1;
+                wait.emplace(dist[x],x);
+            }
         }
-        if (i<n-1 && matrix[i+1][j]=='.' && dirs[i+1][j]==' ') {
-            dirs[i+1][j]='U';
-            wait.push_back({i+1,j});
-        }
-        if (j>0 && matrix[i][j-1]=='.' && dirs[i][j-1]==' ') {
-            dirs[i][j-1]='R';
-            wait.push_back({i,j-1});
-        }
-        if (i<m-1 && matrix[i][j+1]=='.' && dirs[i][j+1]==' ') {
-            dirs[i][j+1]='L';
-            wait.push_back({i,j+1});
-        }
-    }   
+    }
+    return false;
 }
 
 int main() {
@@ -49,34 +49,24 @@ int main() {
     cin.tie(NULL);
 
     cin>>n>>m;
-    F(i,0,n) {
-        vector<char> l(m);
-        F(j,0,m) {
-            cin>>l[j];
-            if (l[j]=='A') {start={i,j}; l[j]='.';}
-            if (l[j]=='B') {finish={i,j}; l[j]='.';}
-        }
-        matrix.push_back(l);
+    nxt.resize(n);
+    F(i,0,m) {
+        int x,y;cin>>x>>y;
+        nxt[--y].push_back(--x);
+        nxt[x].push_back(y);
     }
-    dirs.resize(n,vector<char>(m,' '));
-    bfs(finish.fi,finish.se);
-    dirs[finish.fi][finish.se] = ' ';
+    parent.resize(n,-1);
+    dist.resize(n,INF);
 
-    vector<char> res;
-    int i=start.first, j=start.second;
-    while (dirs[i][j] != ' ') {
-        res.push_back(dirs[i][j]);
-        if (dirs[i][j]=='R') j++;
-        else if (dirs[i][j]=='L') j--;
-        else if (dirs[i][j]=='U') i--;
-        else if (dirs[i][j]=='D') i++;
-    }
-    if (i==finish.fi && j==finish.se) {
-        cout<<"YES\n"<<sz(res)<<'\n';
-        for (char c:res)cout<<c;
+    if (djisktra(0,n-1)) {
+        vector<int> res={n-1};
+        while (res[sz(res)-1]!=0) res.push_back(parent[res[sz(res)-1]]);
+        reverse(all(res));
+        cout<<sz(res)<<'\n';
+        for (int x:res) cout<<x+1<<" ";
         cout<<'\n';
     }
     else {
-        cout<<"NO\n";
-    }
+        cout<<"IMPOSSIBLE\n";
+    }    
 }
